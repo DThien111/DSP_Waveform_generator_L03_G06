@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Máy Phát Sóng Số v3.1 - Dual Channel</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d1117;
+      --panel:     rgba(22, 27, 34, 0.85); 
+      --border:    #30363d;
+      --accent:    #58a6ff;
+      --ch1-color: #d29922; 
+      --ch2-color: #3fb950; 
+      --green:     #3fb950;
+      --red:       #f85149;
+      --text:      #c9d1d9;
+      --muted:     #8b949e;
+    }
+
+    body {
+      background-color: var(--bg);
+      background-image: url('background.jpg'); 
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      /* Lớp phủ độ mờ 0.4 để nền hiện rõ nhưng chữ vẫn đọc được */
+      box-shadow: inset 0 0 0 2000px rgba(13, 17, 23, 0.4); 
+      
+      color: var(--text);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 15px;
+      min-height: 100vh;
+      padding: 16px;
+      overflow-x: hidden; 
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(22, 27, 34, 0.9);
+      margin-bottom: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      backdrop-filter: blur(10px);
+    }
+    
+    .header-branding { display: flex; align-items: center; gap: 20px; }
+    .header-logo { height: 55px; width: auto; border-radius: 4px; object-fit: contain; }
+    header h1 { font-family: 'Share Tech Mono', monospace; font-size: 20px; color: var(--accent); letter-spacing: 1px; }
+    .subtitle { font-family: 'Rajdhani', sans-serif; font-size: 14px; color: var(--ch1-color); font-weight: 600; margin-top: 2px; }
+    
+    .status-row { display: flex; align-items: center; gap: 16px; font-family: 'Share Tech Mono', monospace; }
+    .ch-status { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); box-shadow: 0 0 4px var(--muted); }
+    .dot.on.ch1 { background: var(--ch1-color); box-shadow: 0 0 8px var(--ch1-color); }
+    .dot.on.ch2 { background: var(--ch2-color); box-shadow: 0 0 8px var(--ch2-color); }
+
+    /* ── Layout ── */
+    .layout { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 16px; }
+
+    /* ── Cards ── */
+    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 18px; backdrop-filter: blur(5px); }
+    .card-title { font-family: 'Share Tech Mono', monospace; font-size: 12px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+    /* ── Tabs Chuyển Kênh ── */
+    .channel-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tab-btn { flex: 1; padding: 10px; background: rgba(13, 17, 23, 0.6); border: 1px solid var(--border); color: var(--muted); border-radius: 6px; cursor: pointer; font-family: 'Share Tech Mono', monospace; font-weight: bold; transition: all 0.2s; }
+    .tab-btn.active-ch1 { background: rgba(210, 153, 34, 0.15); border-color: var(--ch1-color); color: var(--ch1-color); }
+    .tab-btn.active-ch2 { background: rgba(63, 185, 80, 0.15); border-color: var(--ch2-color); color: var(--ch2-color); }
+    
+    .enable-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding: 8px; background: rgba(13,17,23,0.5); border-radius: 6px; border: 1px dashed var(--border); }
+    .enable-row label { font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; color: var(--text); }
+
+    /* ── Wave Buttons ── */
+    .wave-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px; }
+    .wave-btn { background: rgba(13, 17, 23, 0.6); border: 1px solid var(--border); border-radius: 6px; padding: 8px 4px; cursor: pointer; color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 600; font-size: 12px; }
+    .wave-btn svg { width: 36px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+    .wave-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(88, 166, 255, 0.15); }
+
+    /* ── Sliders ── */
+    .param { margin-bottom: 16px; }
+    .param-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+    .param-label { font-size: 14px; font-weight: 500; color: var(--text); }
+    .param-input-group { display: flex; align-items: center; gap: 4px; background: rgba(13, 17, 23, 0.6); border: 1px solid var(--border); padding: 2px 6px; border-radius: 4px; }
+    .num-input { background: transparent; border: none; color: var(--accent); font-family: 'Share Tech Mono', monospace; font-size: 15px; text-align: right; width: 60px; outline: none; }
+    .unit { font-size: 12px; color: var(--muted); font-family: 'Share Tech Mono', monospace; }
+    input[type=range] { -webkit-appearance: none; width: 100%; height: 4px; background: var(--border); border-radius: 2px; outline: none; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); cursor: pointer; }
+
+    /* ── Master Play ── */
+    #playBtn { width: 100%; padding: 14px; border-radius: 6px; border: 1px solid var(--green); background: rgba(63, 185, 80, 0.1); color: var(--green); font-family: 'Share Tech Mono', monospace; font-size: 15px; letter-spacing: 2px; font-weight: bold; cursor: pointer; transition: all 0.2s; margin-top: 8px; }
+    #playBtn.playing { background: rgba(248, 81, 73, 0.1); border-color: var(--red); color: var(--red); }
+
+    /* ── Canvas ── */
+    .viz-stack { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+    .canvas-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--panel); border-radius: 8px 8px 0 0; }
+    .canvas-label { font-family: 'Share Tech Mono', monospace; font-size: 12px; letter-spacing: 1px; color: var(--accent); }
+    .scale-controls { display: flex; gap: 12px; font-size: 12px; color: var(--muted); align-items: center; }
+    .scale-inp { background: rgba(13, 17, 23, 0.6); border: 1px solid var(--border); color: var(--text); font-family: 'Share Tech Mono', monospace; font-size: 12px; width: 45px; padding: 3px; border-radius: 3px; text-align: center; outline: none; }
+    .canvas-wrap { position: relative; border-radius: 0 0 8px 8px; border: 1px solid var(--border); border-top: none; background: rgba(2, 4, 8, 0.85); width: 100%; }
+    canvas { display: block; width: 100%; height: 240px; }
+    .legend { position: absolute; top: 10px; right: 10px; font-family: 'Share Tech Mono', monospace; font-size: 11px; background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); }
+    .leg-ch1 { color: var(--ch1-color); }
+    .leg-ch2 { color: var(--ch2-color); }
+
+    /* ── Info Bar ── */
+    .info-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .info-cell {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      backdrop-filter: blur(5px);
+    }
+    .info-cell-label {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      font-family: 'Share Tech Mono', monospace;
+    }
+    .info-cell-value {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 18px;
+      color: var(--text);
+    }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .info-bar { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-branding">
+    <img src="logo.png" alt="Telecom Logo" class="header-logo" onerror="this.style.display='none'">
+    <div>
+      <h1>MÁY PHÁT PHÁT SÓNG ĐA KÊNH <span style="color:var(--muted); font-size:12px">[v2.3]</span></h1>
+      <div class="subtitle"> MÔN XỬ LÝ SỐ TÍN HIỆU - ĐỀ TÀI 6 - L03 - NHÓM 06 </div>
+    </div>
+  </div>
+  <div class="status-row">
+    <div class="ch-status"><div class="dot ch1" id="dot1"></div> CH1</div>
+    <div class="ch-status"><div class="dot ch2" id="dot2"></div> CH2</div>
+  </div>
+</header>
+
+<div class="layout">
+  <div>
+    <div class="card">
+      <div class="channel-tabs">
+        <button id="btnTab1" class="tab-btn active-ch1">⚙️ CH1</button>
+        <button id="btnTab2" class="tab-btn">⚙️ CH2</button>
+      </div>
+
+      <div class="enable-row">
+        <label><input type="checkbox" id="enableChInp"> Phát sóng kênh này (Enable)</label>
+      </div>
+
+      <div class="card-title">Dạng sóng <span id="lblCurrentCh" style="color:var(--ch1-color)">[CH1]</span></div>
+      <div class="wave-grid">
+        <button class="wave-btn active" data-wave="sine"><svg viewBox="0 0 48 24"><path d="M0 12 C6 2,12 2,18 12 C24 22,30 22,36 12 C42 2,48 2,54 12"/></svg>Sine</button>
+        <button class="wave-btn" data-wave="square"><svg viewBox="0 0 48 24"><polyline points="0,18 0,6 12,6 12,18 24,18 24,6 36,6 36,18 48,18 48,6"/></svg>Square</button>
+        <button class="wave-btn" data-wave="triangle"><svg viewBox="0 0 48 24"><polyline points="0,18 8,6 16,18 24,6 32,18 40,6 48,18"/></svg>Tri</button>
+        <button class="wave-btn" data-wave="sawtooth"><svg viewBox="0 0 48 24"><polyline points="0,18 12,6 12,18 24,6 24,18 36,6 36,18 48,6"/></svg>Saw</button>
+        <button class="wave-btn" data-wave="noise"><svg viewBox="0 0 48 24"><polyline points="0,12 4,6 8,18 12,4 16,20 20,10 24,14 28,2 32,22 36,12 40,8 44,16 48,12"/></svg>Noise</button>
+      </div>
+
+      <div class="param">
+        <div class="param-header">
+          <span class="param-label">Tần số (Frequency)</span>
+          <div class="param-input-group"><input type="number" class="num-input" id="freqInp"/><span class="unit">Hz</span></div>
+        </div>
+        <input type="range" id="freqSlider" min="1" max="20000" step="1"/>
+      </div>
+
+      <div class="param">
+        <div class="param-header">
+          <span class="param-label">Biên độ (Vpp)</span>
+          <div class="param-input-group"><input type="number" class="num-input" id="ampInp" step="0.1"/><span class="unit">V</span></div>
+        </div>
+        <input type="range" id="ampSlider" min="0" max="20" step="0.1"/>
+      </div>
+
+      <div class="param">
+        <div class="param-header">
+          <span class="param-label">Pha ban đầu (Phase)</span>
+          <div class="param-input-group"><input type="number" class="num-input" id="phaseInp" step="1"/><span class="unit">°</span></div>
+        </div>
+        <input type="range" id="phaseSlider" min="0" max="360" step="1"/>
+      </div>
+
+      <button id="playBtn">▶ MASTER OUTPUT ON</button>
+    </div>
+  </div>
+
+  <div class="viz-stack">
+    <div>
+      <div class="canvas-header">
+        <span class="canvas-label">OSCILLOSCOPE VIEW (DUAL TRACE)</span>
+        <div class="scale-controls">
+          <label>Time/Div: <input type="number" class="scale-inp" id="scaleTimeX" value="1" step="0.5"/> ms</label>
+          <label>Volt/Div: <input type="number" class="scale-inp" id="scaleTimeY" value="2" step="0.5"/> V</label>
+        </div>
+      </div>
+      <div class="canvas-wrap">
+        <div class="legend"><span class="leg-ch1">■ CH1</span> &nbsp; <span class="leg-ch2">■ CH2</span></div>
+        <canvas id="timeCanvas"></canvas>
+      </div>
+    </div>
+
+    <div>
+      <div class="canvas-header">
+        <span class="canvas-label">SPECTRUM ANALYZER (MIXED FFT)</span>
+        <div class="scale-controls">
+          <label>Span: <input type="number" class="scale-inp" id="scaleFftX" value="10000" step="1000"/> Hz</label>
+        </div>
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="fftCanvas"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="info-bar">
+  <div class="info-cell">
+    <div class="info-cell-label">Tần số kênh đang xem</div>
+    <div class="info-cell-value" style="color: var(--accent)" id="statFreq">1.000 kHz</div>
+  </div>
+  <div class="info-cell">
+    <div class="info-cell-label">Biên độ Max (Vpk)</div>
+    <div class="info-cell-value" id="statVpk">2.50 V</div>
+  </div>
+  <div class="info-cell">
+    <div class="info-cell-label">Giới hạn Nyquist (fs/2)</div>
+    <div class="info-cell-value" id="statNyquist">48.00 kHz</div>
+  </div>
+  <div class="info-cell">
+    <div class="info-cell-label">Trạng thái Kênh</div>
+    <div class="info-cell-value" id="statStatus" style="color:var(--muted)">OFF (Hi-Z)</div>
+  </div>
+</div>
+
+<script>
+// ── CẤU TRÚC DỮ LIỆU 2 KÊNH ──
+const CH = [
+  { enable: true,  wave: 'sine', freq: 1000, amp: 5, phase: 0 },   // Kênh 1
+  { enable: false, wave: 'sine', freq: 2000, amp: 3, phase: 90 }   // Kênh 2
+];
+let activeTab = 0; 
+let fs = 96000; 
+let isPlaying = false;
+
+// ── AUDIO NODES ──
+let audioCtx = null;
+const nodes = [
+  { osc: null, noise: null, gain: null, analyser: null, delay: null },
+  { osc: null, noise: null, gain: null, analyser: null, delay: null }
+];
+let animId = null;
+
+// ── DOM ELEMENTS ──
+const btnTab1 = document.getElementById('btnTab1');
+const btnTab2 = document.getElementById('btnTab2');
+const lblCurrentCh = document.getElementById('lblCurrentCh');
+const enChInp = document.getElementById('enableChInp');
+
+const freqSlider = document.getElementById('freqSlider'); const freqInp = document.getElementById('freqInp');
+const ampSlider = document.getElementById('ampSlider'); const ampInp = document.getElementById('ampInp');
+const phaseSlider = document.getElementById('phaseSlider'); const phaseInp = document.getElementById('phaseInp');
+const waveBtns = document.querySelectorAll('.wave-btn');
+
+const timeCanvas = document.getElementById('timeCanvas'); const tCtx = timeCanvas.getContext('2d');
+const fftCanvas = document.getElementById('fftCanvas'); const fCtx = fftCanvas.getContext('2d');
+
+// Format tần số
+function formatHz(hz) {
+  if (hz >= 1000000) return (hz/1000000).toFixed(3) + ' MHz';
+  if (hz >= 1000) return (hz/1000).toFixed(3) + ' kHz';
+  return hz + ' Hz';
+}
+
+// Cập nhật Info Bar
+function updateStats() {
+  const data = CH[activeTab];
+  document.getElementById('statFreq').textContent = formatHz(data.freq);
+  document.getElementById('statVpk').textContent = (data.amp / 2).toFixed(2) + ' V';
+  document.getElementById('statNyquist').textContent = formatHz(fs / 2);
+  
+  const statStatus = document.getElementById('statStatus');
+  if (isPlaying && data.enable) {
+    statStatus.textContent = 'ON (Phát)';
+    statStatus.style.color = 'var(--green)';
+  } else {
+    statStatus.textContent = 'OFF (Hi-Z)';
+    statStatus.style.color = 'var(--muted)';
+  }
+}
+
+// ── QUẢN LÝ GIAO DIỆN (UI) ──
+function loadTab(index) {
+  activeTab = index;
+  const data = CH[index];
+  
+  btnTab1.className = index === 0 ? 'tab-btn active-ch1' : 'tab-btn';
+  btnTab2.className = index === 1 ? 'tab-btn active-ch2' : 'tab-btn';
+  lblCurrentCh.textContent = index === 0 ? '[CH1]' : '[CH2]';
+  lblCurrentCh.style.color = index === 0 ? 'var(--ch1-color)' : 'var(--ch2-color)';
+
+  enChInp.checked = data.enable;
+  freqSlider.value = data.freq; freqInp.value = data.freq;
+  ampSlider.value = data.amp; ampInp.value = data.amp;
+  phaseSlider.value = data.phase; phaseInp.value = data.phase;
+
+  waveBtns.forEach(btn => { btn.classList.toggle('active', btn.dataset.wave === data.wave); });
+  updateStats();
+}
+
+btnTab1.addEventListener('click', () => loadTab(0));
+btnTab2.addEventListener('click', () => loadTab(1));
+
+function bindInput(slider, inp, field, isFloat) {
+  const update = (val) => {
+    const num = isFloat ? parseFloat(val) : parseInt(val);
+    CH[activeTab][field] = num;
+    updateLiveAudio(activeTab);
+    updateStats();
+    if(!isPlaying) updateOfflineVisuals();
+  };
+  slider.addEventListener('input', (e) => { inp.value = e.target.value; update(e.target.value); });
+  inp.addEventListener('change', (e) => { slider.value = e.target.value; update(e.target.value); });
+}
+bindInput(freqSlider, freqInp, 'freq', false);
+bindInput(ampSlider, ampInp, 'amp', true);
+bindInput(phaseSlider, phaseInp, 'phase', true);
+
+enChInp.addEventListener('change', (e) => {
+  CH[activeTab].enable = e.target.checked;
+  updateLiveAudio(activeTab);
+  updateStats();
+  if(!isPlaying) updateOfflineVisuals();
+});
+
+waveBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    CH[activeTab].wave = btn.dataset.wave;
+    waveBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    updateLiveAudio(activeTab);
+    if(!isPlaying) updateOfflineVisuals();
+  });
+});
+
+// ── XỬ LÝ ÂM THANH (WEB AUDIO API) ──
+function updateLiveAudio(chIdx) {
+  if (!isPlaying || !audioCtx) return;
+  const data = CH[chIdx];
+  const node = nodes[chIdx];
+  
+  if (data.enable) {
+    if (node.gain) node.gain.gain.value = (data.amp / 20) * 0.5;
+    if (node.delay && data.freq > 0) node.delay.delayTime.value = (data.phase / 360) / data.freq;
+
+    if (data.wave === 'noise') {
+      if (node.osc) { node.osc.stop(); node.osc.disconnect(); node.osc = null; }
+      if (!node.noise) {
+        const bufSize = audioCtx.sampleRate * 2;
+        const nBuf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+        const out = nBuf.getChannelData(0);
+        for (let i = 0; i < bufSize; i++) out[i] = Math.random() * 2 - 1;
+        node.noise = audioCtx.createBufferSource();
+        node.noise.buffer = nBuf;
+        node.noise.loop = true;
+        node.noise.connect(node.delay);
+        node.noise.start();
+      }
+    } else {
+      if (node.noise) { node.noise.stop(); node.noise.disconnect(); node.noise = null; }
+      if (!node.osc) {
+        node.osc = audioCtx.createOscillator();
+        node.osc.connect(node.delay);
+        node.osc.start();
+      }
+      node.osc.type = data.wave === 'triangle' ? 'triangle' : data.wave;
+      node.osc.frequency.value = data.freq;
+    }
+  } else {
+    if (node.gain) node.gain.gain.value = 0; 
+  }
+}
+
+function startAudio() {
+  try { audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 96000 }); } 
+  catch(e) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+  fs = audioCtx.sampleRate;
+  const masterOut = audioCtx.destination;
+
+  for(let i=0; i<2; i++) {
+    nodes[i].analyser = audioCtx.createAnalyser();
+    nodes[i].analyser.fftSize = 8192;
+    nodes[i].gain = audioCtx.createGain();
+    nodes[i].delay = audioCtx.createDelay(1.0); 
+    nodes[i].delay.connect(nodes[i].gain);
+    nodes[i].gain.connect(nodes[i].analyser);
+    nodes[i].analyser.connect(masterOut); 
+    updateLiveAudio(i);
+  }
+  
+  isPlaying = true;
+  document.getElementById('playBtn').textContent = '■ MASTER OUTPUT OFF';
+  document.getElementById('playBtn').classList.add('playing');
+  updateStats();
+  renderLoop();
+}
+
+function stopAudio() {
+  for(let i=0; i<2; i++) {
+    if (nodes[i].osc) { nodes[i].osc.stop(); nodes[i].osc.disconnect(); nodes[i].osc = null; }
+    if (nodes[i].noise) { nodes[i].noise.stop(); nodes[i].noise.disconnect(); nodes[i].noise = null; }
+    if (nodes[i].gain) { nodes[i].gain.disconnect(); nodes[i].gain = null; }
+    if (nodes[i].delay) { nodes[i].delay.disconnect(); nodes[i].delay = null; }
+  }
+  if (audioCtx) { audioCtx.close(); audioCtx = null; }
+  if (animId) cancelAnimationFrame(animId);
+  
+  isPlaying = false;
+  document.getElementById('playBtn').textContent = '▶ MASTER OUTPUT ON';
+  document.getElementById('playBtn').classList.remove('playing');
+  document.getElementById('dot1').classList.remove('on');
+  document.getElementById('dot2').classList.remove('on');
+  updateStats();
+  updateOfflineVisuals();
+}
+
+// ── TOÁN HỌC FFT CHO MÔ PHỎNG OFFLINE ──
+function fft(re, im) {
+  const N = re.length; if (N <= 1) return;
+  const halfN = N >> 1;
+  const reE = new Float32Array(halfN), imE = new Float32Array(halfN);
+  const reO = new Float32Array(halfN), imO = new Float32Array(halfN);
+  for (let i = 0; i < halfN; i++) {
+    reE[i] = re[2*i]; imE[i] = im[2*i];
+    reO[i] = re[2*i+1]; imO[i] = im[2*i+1];
+  }
+  fft(reE, imE); fft(reO, imO);
+  for (let k = 0; k < halfN; k++) {
+    const angle = -2 * Math.PI * k / N;
+    const cos = Math.cos(angle), sin = Math.sin(angle);
+    const trRe = cos * reO[k] - sin * imO[k];
+    const trIm = sin * reO[k] + cos * imO[k];
+    re[k] = reE[k] + trRe; im[k] = imE[k] + trIm;
+    re[k+halfN] = reE[k] - trRe; im[k+halfN] = imE[k] - trIm;
+  }
+}
+
+function computeFFTMagnitude(signal) {
+  const N = 4096;
+  const re = new Float32Array(N), im = new Float32Array(N);
+  for (let i = 0; i < N; i++) re[i] = i < signal.length ? signal[i] : 0;
+  fft(re, im);
+  const mag = new Float32Array(N / 2);
+  for (let i = 0; i < N / 2; i++) mag[i] = Math.sqrt(re[i]*re[i] + im[i]*im[i]) / N * 2;
+  return mag;
+}
+
+// ── VẼ ĐỒ THỊ ──
+function resizeCanvas(c) {
+  const rect = c.parentElement.getBoundingClientRect();
+  if (c.width !== rect.width || c.height !== 240) { c.width = rect.width; c.height = 240; }
+}
+
+function drawGrid(ctx, w, h, color) {
+  ctx.clearRect(0, 0, w, h);
+  ctx.lineWidth = 1; ctx.strokeStyle = color;
+  ctx.beginPath(); ctx.moveTo(w/2, 0); ctx.lineTo(w/2, h); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke();
+  for(let i=1; i<10; i++) { ctx.beginPath(); ctx.moveTo(i*w/10, 0); ctx.lineTo(i*w/10, h); ctx.stroke(); }
+  for(let i=1; i<8; i++) { ctx.beginPath(); ctx.moveTo(0, i*h/8); ctx.lineTo(w, i*h/8); ctx.stroke(); }
+}
+
+function findTrigger(data) {
+  for(let i = 0; i < data.length - 1; i++) { if(data[i] <= 0 && data[i+1] > 0) return i; }
+  return 0; 
+}
+
+function drawSignal(ctx, signal, w, h, color, yMax, showSamples, triggerIdx) {
+  ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath();
+  let drawn = 0;
+  for (let i = triggerIdx; i < signal.length && drawn < showSamples; i++, drawn++) {
+    const x = (drawn / showSamples) * w;
+    const y = h/2 - (signal[i] / yMax) * (h/2);
+    drawn === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+}
+
+function drawFFTLine(ctx, mag, w, h, color, fillColor, spanHz, refLvl, binHz) {
+  const maxBin = Math.min(mag.length, Math.floor(spanHz / binHz));
+  ctx.strokeStyle = color; ctx.fillStyle = fillColor;
+  ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(0, h);
+  for (let i = 0; i < maxBin; i++) {
+    let barH = (mag[i] / refLvl) * h;
+    if (barH > h) barH = h;
+    ctx.lineTo((i / maxBin) * w, h - barH);
+  }
+  ctx.lineTo(w, h); ctx.fill(); ctx.stroke();
+}
+
+function genMathSignal(data, N) {
+  const buf = new Float32Array(N);
+  if(!data.enable) return buf;
+  const vpk = data.amp / 2;
+  const phRad = data.phase * Math.PI / 180;
+  for (let n = 0; n < N; n++) {
+    const arg = 2 * Math.PI * data.freq * (n/fs) + phRad;
+    let v = 0;
+    if (data.wave === 'sine') v = Math.sin(arg);
+    else if (data.wave === 'square') v = Math.sin(arg) >= 0 ? 1 : -1;
+    else if (data.wave === 'triangle') v = (2/Math.PI)*Math.asin(Math.sin(arg));
+    else if (data.wave === 'sawtooth') v = 2 * ((data.freq * (n/fs) + phRad/(2*Math.PI)) % 1) - 1;
+    else if (data.wave === 'noise') v = Math.random()*2-1;
+    buf[n] = vpk * v;
+  }
+  return buf;
+}
+
+function updateOfflineVisuals() {
+  resizeCanvas(timeCanvas); resizeCanvas(fftCanvas);
+  const w = timeCanvas.width, h = timeCanvas.height;
+  drawGrid(tCtx, w, h, 'rgba(48, 54, 61, 0.8)');
+  drawGrid(fCtx, w, h, 'rgba(48, 54, 61, 0.8)');
+  
+  // 1. VẼ OSCILLOSCOPE
+  const tDiv = parseFloat(document.getElementById('scaleTimeX').value) || 1;
+  const yDiv = parseFloat(document.getElementById('scaleTimeY').value) || 2;
+  const showSamples = Math.floor((tDiv * 10 / 1000) * fs);
+  const sig1 = genMathSignal(CH[0], showSamples + 2000);
+  const sig2 = genMathSignal(CH[1], showSamples + 2000);
+  const trig = CH[0].enable ? findTrigger(sig1) : 0;
+  
+  if(CH[0].enable) drawSignal(tCtx, sig1, w, h, '#d29922', yDiv*4, showSamples, trig);
+  if(CH[1].enable) drawSignal(tCtx, sig2, w, h, '#3fb950', yDiv*4, showSamples, trig);
+
+  // 2. VẼ FFT (OFFLINE)
+  const spanHz = parseFloat(document.getElementById('scaleFftX').value) || 10000;
+  const binHz = fs / 4096;
+  const refLvl = 5; // Cố định 5V cho dễ nhìn
+  
+  if(CH[0].enable) {
+    const mag1 = computeFFTMagnitude(genMathSignal(CH[0], 4096));
+    drawFFTLine(fCtx, mag1, w, h, '#d29922', 'rgba(210, 153, 34, 0.15)', spanHz, refLvl, binHz);
+  }
+  if(CH[1].enable) {
+    const mag2 = computeFFTMagnitude(genMathSignal(CH[1], 4096));
+    drawFFTLine(fCtx, mag2, w, h, '#3fb950', 'rgba(63, 185, 80, 0.15)', spanHz, refLvl, binHz);
+  }
+
+  document.getElementById('dot1').classList.toggle('on', CH[0].enable);
+  document.getElementById('dot2').classList.toggle('on', CH[1].enable);
+}
+
+function renderLoop() {
+  if (!isPlaying) return;
+  resizeCanvas(timeCanvas); resizeCanvas(fftCanvas);
+  const w = timeCanvas.width, h = timeCanvas.height;
+  drawGrid(tCtx, w, h, 'rgba(48, 54, 61, 0.8)');
+  drawGrid(fCtx, w, h, 'rgba(48, 54, 61, 0.8)');
+
+  // 1. VẼ LẠI TIME DOMAIN
+  const tDiv = parseFloat(document.getElementById('scaleTimeX').value) || 1;
+  const yDiv = parseFloat(document.getElementById('scaleTimeY').value) || 2;
+  const showSamples = Math.floor((tDiv * 10 / 1000) * fs);
+
+  const d1 = new Float32Array(nodes[0].analyser.fftSize); const d2 = new Float32Array(nodes[1].analyser.fftSize);
+  nodes[0].analyser.getFloatTimeDomainData(d1); nodes[1].analyser.getFloatTimeDomainData(d2);
+
+  const s1 = new Float32Array(d1.length); const s2 = new Float32Array(d2.length);
+  for(let i=0; i<d1.length; i++) {
+    s1[i] = (d1[i] / ((CH[0].amp/20)*0.5 || 1)) * (CH[0].amp/2);
+    s2[i] = (d2[i] / ((CH[1].amp/20)*0.5 || 1)) * (CH[1].amp/2);
+  }
+
+  const trig = CH[0].enable ? findTrigger(s1) : 0;
+  if(CH[0].enable) drawSignal(tCtx, s1, w, h, '#d29922', yDiv*4, showSamples, trig);
+  if(CH[1].enable) drawSignal(tCtx, s2, w, h, '#3fb950', yDiv*4, showSamples, trig);
+
+  // 2. VẼ LẠI FFT DOMAIN (LIVE)
+  const spanHz = parseFloat(document.getElementById('scaleFftX').value) || 10000;
+  const binHz = fs / nodes[0].analyser.fftSize;
+  const refLvl = 5; 
+
+  const f1 = new Float32Array(nodes[0].analyser.frequencyBinCount);
+  const f2 = new Float32Array(nodes[1].analyser.frequencyBinCount);
+  nodes[0].analyser.getFloatFrequencyData(f1);
+  nodes[1].analyser.getFloatFrequencyData(f2);
+
+  const m1 = new Float32Array(f1.length); const m2 = new Float32Array(f2.length);
+  for(let i=0; i<f1.length; i++) {
+    m1[i] = Math.pow(10, f1[i]/20) * (CH[0].amp/2) * 100;
+    m2[i] = Math.pow(10, f2[i]/20) * (CH[1].amp/2) * 100;
+  }
+
+  if(CH[0].enable) drawFFTLine(fCtx, m1, w, h, '#d29922', 'rgba(210, 153, 34, 0.15)', spanHz, refLvl, binHz);
+  if(CH[1].enable) drawFFTLine(fCtx, m2, w, h, '#3fb950', 'rgba(63, 185, 80, 0.15)', spanHz, refLvl, binHz);
+
+  animId = requestAnimationFrame(renderLoop);
+}
+
+// Khởi tạo Event
+document.getElementById('playBtn').addEventListener('click', () => { if (!isPlaying) startAudio(); else stopAudio(); });
+['scaleTimeX', 'scaleTimeY', 'scaleFftX'].forEach(id => {
+  document.getElementById(id).addEventListener('change', () => { if(!isPlaying) updateOfflineVisuals(); });
+});
+
+loadTab(0);
+updateOfflineVisuals();
+</script>
+</body>
+</html>
