@@ -1,4 +1,4 @@
-# Máy Phát Sóng Số Đa Kênh & Máy Phân Tích Phổ Tần Số
+# Máy Phát Sóng Đa Kênh & Máy Phân Tích Phổ Tần Số
 
 Một công cụ tương tác trực quan mô phỏng xử lý tín hiệu số (DSP) trên nền tảng Web, được xây dựng để giả lập cấu trúc của một máy phát sóng phần cứng, dao động ký (oscilloscope) và máy phân tích phổ (spectrum analyzer). Dự án mang lại trải nghiệm nghe - nhìn theo thời gian thực về lý thuyết tín hiệu rời rạc, các nguyên lý viễn thông và các ràng buộc thiết kế phần cứng ngay trên trình duyệt mà không cần cài đặt bất kỳ thư viện bên ngoài nào.
 
