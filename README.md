@@ -2,7 +2,7 @@
 
 A web-based, interactive DSP (Digital Signal Processing) simulation tool built to model a hardware function generator, oscilloscope, and spectrum analyzer. This project provides a real-time visual and auditory showcase of discrete signal theory, telecommunication principles, and hardware design constraints directly within the browser without any external dependencies.
 
-🚀 **Live Demo:** `https://dsp-l03-nhom6.netlify.app/`
+🚀 **Live Demo:** https://dsp-l03-nhom6.netlify.app/
 
 ---
 
